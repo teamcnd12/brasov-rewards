@@ -7,15 +7,19 @@ export function useRewards() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('useRewards: Starting to fetch rewards...');
     fetchRewards();
   }, []);
 
   const fetchRewards = async () => {
-    const { data } = await supabase
+    console.log('Fetching rewards from database...');
+    const { data, error } = await supabase
       .from('rewards')
       .select('*')
       .eq('active', true)
       .order('id');
+
+    console.log('Rewards data:', data, 'Error:', error);
 
     if (data) {
       setRewards(data.map(r => ({

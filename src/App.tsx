@@ -36,21 +36,31 @@ function App() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [newUserData, setNewUserData] = useState<{ userId: string; name: string } | null>(null);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [initError, setInitError] = useState<string | null>(null);
+
+  console.log('App component rendering...');
+
   const { rewards } = useRewards();
   const { users, refetch: refetchUsers } = useAllUsers();
   const { redemptionCodes, refetch: refetchCodes } = useRedemptionCodes();
 
   useEffect(() => {
     const checkAuthSession = async () => {
+      console.log('Starting auth session check...');
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        console.log('Fetching session...');
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        console.log('Session result:', session ? 'Found session' : 'No session', sessionError);
 
         if (session?.user) {
-          const { data: user } = await supabase
+          console.log('User authenticated, fetching user data...');
+          const { data: user, error: userError } = await supabase
             .from('users')
             .select('*')
             .eq('auth_user_id', session.user.id)
             .maybeSingle();
+
+          console.log('User data:', user, 'Error:', userError);
 
           if (user) {
             const { data: transactions } = await supabase
@@ -101,6 +111,7 @@ function App() {
               })) || [],
             };
 
+            console.log('Setting user:', userObj);
             setCurrentUser(userObj);
             if (user.role === 'staff') {
               setViewMode('staff');
@@ -109,10 +120,14 @@ function App() {
               setCustomerPage('home');
             }
           }
+        } else {
+          console.log('No authenticated user found');
         }
       } catch (error) {
         console.error('Error checking auth session:', error);
+        setInitError(`Initialization error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       } finally {
+        console.log('Setting isCheckingSession to false');
         setIsCheckingSession(false);
       }
     };
@@ -565,6 +580,12 @@ useEffect(() => {
         <div className="text-center">
           <img src="/logodarkbrown.svg" alt="Logo" className="w-16 h-16 mx-auto mb-4 opacity-70 animate-pulse" />
           <p style={{ color: '#6f6a65' }} className="text-sm">Učitavanje...</p>
+          {initError && (
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg max-w-md mx-auto">
+              <p className="text-red-800 text-xs">{initError}</p>
+              <p className="text-red-600 text-xs mt-2">Check browser console for details (F12)</p>
+            </div>
+          )}
         </div>
       </div>
     );
