@@ -38,29 +38,21 @@ function App() {
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [initError, setInitError] = useState<string | null>(null);
 
-  console.log('App component rendering...');
-
   const { rewards } = useRewards();
   const { users, refetch: refetchUsers } = useAllUsers();
   const { redemptionCodes, refetch: refetchCodes } = useRedemptionCodes();
 
   useEffect(() => {
     const checkAuthSession = async () => {
-      console.log('Starting auth session check...');
       try {
-        console.log('Fetching session...');
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        console.log('Session result:', session ? 'Found session' : 'No session', sessionError);
+        const { data: { session } } = await supabase.auth.getSession();
 
         if (session?.user) {
-          console.log('User authenticated, fetching user data...');
-          const { data: user, error: userError } = await supabase
+          const { data: user } = await supabase
             .from('users')
             .select('*')
             .eq('auth_user_id', session.user.id)
             .maybeSingle();
-
-          console.log('User data:', user, 'Error:', userError);
 
           if (user) {
             const { data: transactions } = await supabase
@@ -111,7 +103,6 @@ function App() {
               })) || [],
             };
 
-            console.log('Setting user:', userObj);
             setCurrentUser(userObj);
             if (user.role === 'staff') {
               setViewMode('staff');
@@ -120,14 +111,11 @@ function App() {
               setCustomerPage('home');
             }
           }
-        } else {
-          console.log('No authenticated user found');
         }
       } catch (error) {
         console.error('Error checking auth session:', error);
         setInitError(`Initialization error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       } finally {
-        console.log('Setting isCheckingSession to false');
         setIsCheckingSession(false);
       }
     };
