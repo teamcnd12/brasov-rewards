@@ -685,9 +685,3 @@ useEffect(() => {
 }
 
 export default App;
-
-
-
-{currentView === 'reset-password' && (
-  <ResetPasswordPage onSuccess={() => setCurrentView('login')} />
-)}
